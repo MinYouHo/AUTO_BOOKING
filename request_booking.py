@@ -85,7 +85,7 @@ url = domain + 'BookMeApp/BookMe1010Ctrl?action=doLogin'
 index1 = r.text.find("sessionId' value='")
 index2 = r.text.find("'>\n<input type='hidden' name='userid")
 sessionId = r.text[index1+18:index2]
-userid = '41047023S'
+userid = account['muid']
 data = {'sessionId': sessionId, 'userid': userid}
 r = requests.post(url, headers=headers, data=data, cookies=cookies)
 if r.status_code != requests.codes.ok:
@@ -97,7 +97,7 @@ if r.status_code != requests.codes.ok:
     exit()
 print("Enter Booking Web (2/2) Success")
 fp.write("Enter Booking Web (2/2) Success: " + str(r.status_code) + "\n")
-cookkies = r.cookies.get_dict
+cookies = r.cookies.get_dict
 
 # 觀察response
 with open("response.txt", 'w', encoding='utf8') as fp2:
