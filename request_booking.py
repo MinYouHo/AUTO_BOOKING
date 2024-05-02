@@ -1,31 +1,17 @@
 import requests, time
 from bs4 import BeautifulSoup
 
-headers = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'Accept-Encoding': 'gzip, deflate, br, zstd',
-    'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
-    'Cache-Control': 'max-age=0',
-    'Connection': 'keep-alive',
-    'Content-Length': '48',
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Host': 'iportal.ntnu.edu.tw',
-    'Origin': 'https://iportal.ntnu.edu.tw',
-    'Referer': 'https://iportal.ntnu.edu.tw/ntnu/',
-    'Sec-Ch-Ua': '"Chromium";v="124", "Microsoft Edge";v="124", "Not-A.Brand";v="99"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': '"Windows"',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-User': '?1',
-    'Upgrade-Insecure-Requests': '1',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0'
-}
-
 account = {'muid': '',
           'mpassword': '',
           'forceMobile': 'pc'}
+""" # YYYYMMDD
+roomIwant =  """
+headers = {
+    'Host': 'iportal.ntnu.edu.tw',
+    'Referer': 'https://iportal.ntnu.edu.tw/ntnu/',
+    'Sec-Ch-Ua': '"Chromium";v="124", "Microsoft Edge";v="124", "Not-A.Brand";v="99"',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0'
+}
 cookies = ''
 domain = 'https://iportal.ntnu.edu.tw/'
 url = domain + 'login.do'
@@ -44,6 +30,7 @@ if r.status_code != requests.codes.ok:
 print("Login Success")
 fp.write("Login Success: " + str(r.status_code) + "\n")
 cookies = r.cookies.get_dict()
+print(str(cookies))
 
 """ 進校網 """
 # time.sleep(1)
@@ -51,8 +38,7 @@ headers['Referer'] = url
 # url = domain + 'myPortal.do'
 index = r.text.find('myPortal.do?thetime=')
 t = r.text[index+20:index+33]
-url = domain + r.text[index:index+33]
-# params = {'thetime': t}
+url = domain + r.text[index:index+33] # params = {'thetime': t}
 r = requests.get(url, headers=headers, cookies=cookies)
 if r.status_code != requests.codes.ok:
     print("Enter School Web Failse:", r.status_code)
@@ -63,8 +49,9 @@ if r.status_code != requests.codes.ok:
     exit()
 print("Enter School Web Success")
 fp.write("Enter School Web Success: " + str(r.status_code) + "\n")
+print(str(cookies))
 
-""" 進琴房 """
+""" 進琴房 (1/2) """ # 需要JSESSIONID
 headers['Sec-Fetch-Site'] = 'none'
 url = domain + 'ssoIndex.do?apUrl=https://pms.itc.ntnu.edu.tw/BookMeApp/BookMe1010Ctrl?action=doLogin&apOu=Practice_Piano_Room_Booking&sso=true&datetime1='+t
 r = requests.get(url, cookies=cookies)
@@ -77,8 +64,9 @@ if r.status_code != requests.codes.ok:
     exit()
 print("Enter Booking Web (1/2) Success")
 fp.write("Enter Booking Web (1/2) Success: " + str(r.status_code) + "\n")
+print(str(cookies))
 
-""" 進琴房 (2/2) """
+""" 進琴房 (2/2) """ # 會給新的JSESSIONID
 domain = 'https://pms.itc.ntnu.edu.tw/'
 url = domain + 'BookMeApp/BookMe1010Ctrl?action=doLogin'
 # 取得data
@@ -97,12 +85,29 @@ if r.status_code != requests.codes.ok:
     exit()
 print("Enter Booking Web (2/2) Success")
 fp.write("Enter Booking Web (2/2) Success: " + str(r.status_code) + "\n")
-cookies = r.cookies.get_dict
+cookies = r.cookies
 
-# 觀察response
-with open("response.txt", 'w', encoding='utf8') as fp2:
-    soup = BeautifulSoup(r.text, 'lxml')
-    fp2.write(soup.prettify())
-# 
+# Google Analytics cookies需要手動更新
+cookies['_ga'] = ''
+cookies['_gid'] = ''
+cookies['_ga_L47EP67E8W'] = ''
+
+""" 預約琴房 """
+headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+headers['Host'] = 'pms.itc.ntnu.edu.tw'
+headers['Origin'] = 'https://pms.itc.ntnu.edu.tw'
+headers['Referer'] = 'https://pms.itc.ntnu.edu.tw/BookMeApp/BookMe1010Ctrl'
+headers['Sec-Fetch-Dest'] = 'empty'
+headers['Sec-Fetch-Mode'] = 'cors'
+headers['Sec-Fetch-Site'] = 'same-origin'
+headers['X-Requested-With'] = 'XMLHttpRequest'
+# data = {'action': 'doBookMe', 'data': '202404303Ds05'} # (年月日 + 房號) + 時段
+data = {'action': 'doGoTo1050'} # 琴房狀態
+# data = {'action': 'doBookMe', 'data': 's05'} # (年月日 + 房號) + 時段
+
+url = domain + 'BookMeApp/BookMe1010Ctrl'
+# url = domain + 'BookMeApp/BookMe1050Ctrl'
+r = requests.post(url, headers=headers, data=data, cookies=cookies)
+print(r.text)
 
 fp.close()

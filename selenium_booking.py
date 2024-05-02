@@ -21,6 +21,7 @@ options.binary_location = r"C:\Program Files (x86)\Microsoft\Edge\Application\ms
 # options.add_argument()
 # options.use_chromium = True
 options.add_argument("--enable-chrome-browser-cloud-management")
+options.add_argument("--auto-open-devtools-for-tabs")
 
 # options.add_experimental_option("useAutomationExtension", False)
 
